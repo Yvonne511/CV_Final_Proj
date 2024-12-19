@@ -10,7 +10,7 @@ from dust3r.model import AsymmetricCroCo3DStereo
 
 class SpatialMemory():
     def __init__(self, norm_q, norm_k, norm_v, mem_dropout=None, 
-                 long_mem_size=4000, work_mem_size=5, 
+                 long_mem_size=40000000, work_mem_size=5, 
                  attn_thresh=5e-4, sim_thresh=0.95, 
                  save_attn=False, num_patches=None):
         self.norm_q = norm_q
@@ -38,6 +38,7 @@ class SpatialMemory():
         self.wm = 0
         if self.save_attn:
             self.attn_vis = None
+        self.mem_age = None
 
     def add_mem_k(self, feat):
         if self.mem_k is None:
@@ -80,6 +81,16 @@ class SpatialMemory():
     def add_mem(self, feat_k, feat_v, pts_cur=None, img_cur=None):  
         if self.num_patches is None:
             self.num_patches = feat_k.shape[1]
+
+        if self.mem_age is not None:
+            self.mem_age += 1
+        
+        new_age = torch.zeros_like(feat_k[:, :, :1], device=feat_k.device)
+        
+        if self.mem_age is None:
+            self.mem_age = new_age
+        else:
+            self.mem_age = torch.cat((self.mem_age, new_age), dim=1)
             
         if self.mem_count is None:
             self.mem_count = torch.zeros_like(feat_k[:, :, :1])
@@ -189,8 +200,27 @@ class SpatialMemory():
 
         num_mem_b = self.mem_k.shape[1]
 
-
         top_k_values, top_k_indices = torch.topk(weights, self.top_k, dim=1)
+        
+        mode = 'regular'
+        if mode == 'regular':
+            pass
+        elif mode == 'distributed':
+            batch_size = weights.shape[0]
+            n = weights.shape[1]
+            indices = torch.linspace(0, n - 1, steps=self.top_k).round().long()  # [top_k]
+            # Expand to [batch_size, top_k]
+            indices = indices.unsqueeze(0).expand(batch_size, -1)
+            indices = indices.to(self.mem_k.device)
+            top_k_indices = indices
+            top_k_indices = top_k_indices.unsqueeze(-1)
+        elif mode == 'weighted':
+            threshold = self.work_mem_size + 5
+            priority_weights = weights.clone()
+            # Boost weights where mem_count is below threshold
+            priority_weights[self.mem_count < threshold] *= 1e5
+            top_k_values, top_k_indices = torch.topk(priority_weights, self.top_k, dim=1)
+        
         top_k_indices_expanded = top_k_indices.expand(-1, -1, self.mem_k.size(-1))
 
 
