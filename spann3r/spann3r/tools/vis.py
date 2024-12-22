@@ -14,11 +14,11 @@ import numpy as np
 import imageio
 import os.path as osp
 
-def render_frames(pts_all, image_all, camera_parameters, output_dir, mask=None, save_video=True, save_camera=True):
+def render_frames(pts_all, image_all, camera_parameters, output_dir, mask=None, save_video=True, save_camera=False):
     t, h, w, _ = pts_all.shape
 
     vis = o3d.visualization.Visualizer()
-    vis.create_window(width=1920, height=1080)
+    # vis.create_window(width=1920, height=1080)
 
     render_frame_path = os.path.join(output_dir, 'render_frames')
     os.makedirs(render_frame_path, exist_ok=True)
@@ -69,7 +69,7 @@ def render_frames(pts_all, image_all, camera_parameters, output_dir, mask=None, 
     if save_video:
         writer.close()
 
-    vis.destroy_window()
+    # vis.destroy_window()
 
 def draw_camera(c2w, cam_width=0.32/2, cam_height=0.24/2, f=0.10, color=[0, 1, 0], show_axis=True):
     points = [[0, 0, 0], [-cam_width, -cam_height, f], [cam_width, -cam_height, f],
@@ -108,24 +108,24 @@ def find_render_cam(pcd, poses_all=None, cam_width=0.016, cam_height=0.012, cam_
         return False
     
     vis = o3d.visualization.VisualizerWithKeyCallback()
-    vis.create_window(width=1920, height=1080)
-    vis.add_geometry(pcd)
-    if poses_all is not None:
-        for pose in poses_all:
-            for geometry in draw_camera(pose, cam_width, cam_height, cam_f):
-                vis.add_geometry(geometry)
+    # vis.create_window(width=1920, height=1080)
+    # vis.add_geometry(pcd)
+    # if poses_all is not None:
+    #     for pose in poses_all:
+    #         for geometry in draw_camera(pose, cam_width, cam_height, cam_f):
+    #             vis.add_geometry(geometry)
 
-    opt = vis.get_render_option()
-    opt.point_size = 1
-    opt.background_color = np.array([0, 0, 0])
+    # opt = vis.get_render_option()
+    # opt.point_size = 1
+    # opt.background_color = np.array([0, 0, 0])
 
     vis.register_key_callback(32, print_camera_pose)
 
-    while vis.poll_events():
-        vis.update_renderer()
+    # while vis.poll_events():
+    #     vis.update_renderer()
 
-    vis.destroy_window()
-
+    # vis.destroy_window()
+    print("last_camera_params", last_camera_params)
     return last_camera_params
 
 def vis_pred_and_imgs(pts_all, save_path, images_all=None, conf_all=None, save_video=True):
@@ -197,9 +197,5 @@ def vis_pred_and_imgs(pts_all, save_path, images_all=None, conf_all=None, save_v
             conf_writer.close()
 
 
-
-
-
-    
 
 

@@ -22,17 +22,18 @@ from spann3r.model import Spann3R
 from spann3r.loss import Regr3D_t_ScaleShiftInv
 from spann3r.tools.eval_recon import accuracy, completion
 from spann3r.tools.vis import render_frames, find_render_cam, vis_pred_and_imgs
+# from spann3r.tools.vis import render_frames, look_at_view_transform, vis_pred_and_imgs
 
 def get_args_parser():
     parser = argparse.ArgumentParser('Spann3R demo', add_help=False)
-    parser.add_argument('--save_path', type=str, default='./output/demo/', help='Path to experiment folder')
-    parser.add_argument('--demo_path', type=str, default='./examples/s00567', help='Path to experiment folder')
-    parser.add_argument('--ckpt_path', type=str, default='./checkpoints/spann3r.pth', help='ckpt path')
+    parser.add_argument('--save_path', type=str, default='/vast/yw4142/checkpoints/spann3r/checkpoints/output/demo/', help='Path to experiment folder')
+    parser.add_argument('--demo_path', type=str, default='/vast/yw4142/datasets/spann3r/examples/s00567', help='Path to experiment folder')
+    parser.add_argument('--ckpt_path', type=str, default='/vast/yw4142/checkpoints/spann3r/checkpoints/spann3r.pth', help='ckpt path')
     parser.add_argument('--scenegraph_type', type=str, default='complete', help='scenegraph type')
     parser.add_argument('--offline', action='store_true', help='offline reconstruction')
     parser.add_argument('--device', type=str, default='cuda:0', help='device')
     parser.add_argument('--conf_thresh', type=float, default=1e-3, help='confidence threshold')
-    parser.add_argument('--kf_every', type=int, default=10, help='map every kf_every frames')
+    parser.add_argument('--kf_every', type=int, default=1, help='map every kf_every frames')
     parser.add_argument('--vis', action='store_true', help='visualize')
     parser.add_argument('--vis_cam', action='store_true', help='visualize camera pose')
     parser.add_argument('--save_ori', action='store_true', help='save original parameters for NeRF')
@@ -77,7 +78,7 @@ def main(args):
     os.makedirs(workspace, exist_ok=True)
 
     ##### Load model
-    model = Spann3R(dus3r_name='./checkpoints/DUSt3R_ViTLarge_BaseDecoder_512_dpt.pth', 
+    model = Spann3R(dus3r_name='/vast/yw4142/checkpoints/spann3r/checkpoints/DUSt3R_ViTLarge_BaseDecoder_512_dpt.pth', 
                 use_feat=False).to(args.device)
     
     model.load_state_dict(torch.load(args.ckpt_path, map_location=args.device)['model'])
